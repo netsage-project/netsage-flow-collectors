@@ -1,0 +1,42 @@
+## This file is intended for developer use only.  It sets up a rabbit
+## connections that allows easier development
+version: "3.7"
+services:
+  ##Enable only if you wish to not rely on external rabbit
+  rabbit:
+    image: netsage/rabbitmq:3-management
+    env_file: .env
+    volumes:
+      - ./data/rabbit:/var/lib/rabbitmq
+    networks:
+      - shared_backend
+    ports:
+      - "15672:15672"
+      - "5671:5671"
+      - "5672:5672"
+
+  ##both collectors only need if using dev rabbit defined above.
+  netflow_collector:
+    depends_on:
+      - rabbit
+  sflow_collector:
+    depends_on:
+      - rabbit
+  ## Services below are used to generate sflow data
+  agent:
+    image: sflow/host-sflow
+    container_name: host-sflow
+    network_mode: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - COLLECTOR=host.docker.internal
+      - SAMPLING=10
+      - PORT=9997
+  iperf3:
+    image: sflow/iperf3
+    container_name: iperf3
+    command: "-s"
+    ports:
+      - 5201:5201
+

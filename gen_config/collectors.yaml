@@ -1,0 +1,16 @@
+basePath: data
+include_dev_generate: false
+include_dev_queue: false
+template_locations:
+  docker: docker
+  nfacctd: collectors
+
+environment_file:
+
+sflow:
+  - sensorName: awesome
+    instanceName: foobar
+
+netflow:
+  - sensorName: awesome
+    instanceName: foobar

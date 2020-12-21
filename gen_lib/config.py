@@ -17,6 +17,37 @@ def load_config(config_file, debug=False):
     return config
 
 
+class SensorObjet(object):
+    def __init__(self, data):
+        self.__data__ = copy(data)
+
+    @property
+    def type(self):
+        return self.__data__.get("type")
+
+    @property
+    def port(self):
+        return self.__data__.get("port")
+
+    @property
+    def name(self):
+        return self.__data__.get("sensorName")
+
+    @property
+    def instance(self):
+        return self.__data__.get("instanceName")
+
+class SensorConfig(object):
+    sflow_sensors = []
+    netflow_sensors = []
+    def __init__(self, sensors):
+        for key in sensors:
+            o = SensorObjet(key)
+            if o.type == "sflow":
+                self.sflow_sensors.append(o)
+            else:
+                self.netflow_sensors.append(o)
+
 class PmfAcctConfig(object):
     def __init__(self, **kwargs):
         self.accepted_types = ["netflow", "sflow"]
@@ -53,6 +84,10 @@ class Config(object):
     def __init__(self):
         raise RuntimeError('Call instance() instead')
 
+    @property
+    def environment(self):
+        return self.__config__.get('environment_file', '.env')
+
     @classmethod
     def load_config(cls):
         script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -75,9 +110,9 @@ class Config(object):
             ## allow CLI override
             if debug:
                 gila.override('debug', debug)
-
-        dict = gila.all_config()
-        cls.__pmfconfig__ = PmfAcctConfig(**dict.get("pmacct", {}))
+            config_data = gila.all_config()
+            cls.__pmfconfig__ = PmfAcctConfig(**config_data.get("pmacct", {}))
+            cls.__sensors__ = SensorConfig(config_data.get("sensors", {}))
 
 
         return cls.__instance__

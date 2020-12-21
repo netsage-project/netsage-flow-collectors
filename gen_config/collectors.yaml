@@ -15,14 +15,14 @@ template_locations:
   docker: docker
   nfacctd: collectors
 
-environment_file: docker/env.example
+environment_file: env.example
 
-sflow:
-  - sensorName: awesome
-    instanceName: foobar
-    port: 9996
-
-netflow:
-  - sensorName: awesome
-    instanceName: foobar
-    port: 9997
+sensors:
+    - sensorName: awesome
+      type: sflow
+      instanceName: foobar
+      port: 9996
+    - sensorName: awesome
+      type: netflow
+      instanceName: foobar
+      port: 9997

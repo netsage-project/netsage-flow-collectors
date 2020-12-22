@@ -1,38 +1,43 @@
 version: "3.7"
 services:
-  % for row in netflow_records:
-  netflow_collector:
+   {% for item in netflow_sensors %}
+  netflow_{{ item.name }}:
     image: pmacct/nfacctd:v1.7.5
+    {% if production  %}
     external_links:
       - rabbit
-    ports:
-      - "9996:${port}/udp"
     networks:
       - shared_backend
+    {% endif %}
+    ports:
+      - "9996:{{item.port}}/udp"
     volumes:
-      - ./conf/netflow/nfacctd.conf:/etc/pmacct/nfacctd.conf
-      - ./conf/netflow/pretag.map:/etc/pmacct/pretag.map
-  % endfor
-
-  % for row in netflow_records:
-  sflow_collector:
+      - ./conf/netflow/{{item.name}}/nfacctd.conf:/etc/pmacct/nfacctd.conf
+      - ./conf/netflow/{{item.name}}/pretag.map:/etc/pmacct/pretag.map
+  {% endfor %}
+  {% for item in sflow_sensors %}
+  sflow_{{item.name}}:
     image: pmacct/sfacctd:v1.7.5
     # command: sleep 99999
     # restart: on-failure
+    {% if production %}
     external_links:
       - rabbit
     networks:
       - shared_backend
+    {% endif %}
     ports:
-      - "9997:9997/udp"
+      - "9997:{{item.port}}/udp"
     volumes:
-      - ./conf/sflow/sfacctd.conf:/etc/pmacct/sfacctd.conf
-      - ./conf/sflow/pretag.map:/etc/pmacct/pretag.map
-  % endfor
+      - ./conf/sflow/{{item.name}}/sfacctd.conf:/etc/pmacct/sfacctd.conf
+      - ./conf/sflow/{{item.name}}/pretag.map:/etc/pmacct/pretag.map
+  {% endfor %}
 
 
+{% if production %}
 networks:
   shared_backend:
     name: shared_backend
     # use a custom driver, with no options
     driver: bridge
+{%endif %}

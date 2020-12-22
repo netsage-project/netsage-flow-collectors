@@ -3,6 +3,7 @@ import os, sys
 from loguru import logger
 import gila
 from copy import copy
+from gen_lib.sensors import SensorObjet
 from os import environ
 
 
@@ -13,40 +14,29 @@ def load_config(config_file, debug=False):
     path = os.path.dirname(os.path.abspath(config_file))
     file_name = os.path.basename(os.path.abspath(config_file))
     file_name = os.path.splitext(file_name)[0]
-    config = Config.instance(debug, path, file_name)
-    return config
+    Config.instance(debug, path, file_name)
 
-
-class SensorObjet(object):
-    def __init__(self, data):
-        self.__data__ = copy(data)
-
-    @property
-    def type(self):
-        return self.__data__.get("type")
-
-    @property
-    def port(self):
-        return self.__data__.get("port")
-
-    @property
-    def name(self):
-        return self.__data__.get("sensorName")
-
-    @property
-    def instance(self):
-        return self.__data__.get("instanceName")
 
 class SensorConfig(object):
     sflow_sensors = []
     netflow_sensors = []
+
     def __init__(self, sensors):
+        ports = set()
         for key in sensors:
             o = SensorObjet(key)
+            if o.enabled is False:
+                continue
+            if o.port in ports:
+                raise Exception(
+                    "invalid configuration.  Port {} is already used with a different configuration".format(o.port))
             if o.type == "sflow":
                 self.sflow_sensors.append(o)
+                ports.add(o.port)
             else:
                 self.netflow_sensors.append(o)
+                ports.add(o.port)
+
 
 class PmfAcctConfig(object):
     def __init__(self, **kwargs):
@@ -76,6 +66,7 @@ class PmfAcctConfig(object):
     def sflow_config(self):
         return self.__config__.get('sflow', {})
 
+
 class Config(object):
     __instance__ = None
     __config__ = {}
@@ -85,8 +76,31 @@ class Config(object):
         raise RuntimeError('Call instance() instead')
 
     @property
+    def dev_mode(self):
+        return gila.get("include_dev_generate")
+
+    @property
     def environment(self):
-        return self.__config__.get('environment_file', '.env')
+        return gila.get('environment_file')
+
+    @property
+    def deploy_path(self):
+        return gila.get('deployment_location')
+
+    @property
+    def template_folder(self):
+        return gila.get('template_folder')
+
+    def template_path(self, template_type, file):
+        return os.path.join(self.template_folder, gila.get("template_locations.{}".format(template_type)), file)
+
+    @property
+    def sensors(self):
+        return self.__sensors__
+
+    @property
+    def pmacct_config(self):
+        return self.__pmfconfig__
 
     @classmethod
     def load_config(cls):
@@ -110,9 +124,8 @@ class Config(object):
             ## allow CLI override
             if debug:
                 gila.override('debug', debug)
-            config_data = gila.all_config()
-            cls.__pmfconfig__ = PmfAcctConfig(**config_data.get("pmacct", {}))
-            cls.__sensors__ = SensorConfig(config_data.get("sensors", {}))
-
+            cls.__config__ = gila.all_config()
+            cls.__pmfconfig__ = PmfAcctConfig(**cls.__config__.get("pmacct", {}))
+            cls.__sensors__ = SensorConfig(cls.__config__.get("sensors", {}))
 
         return cls.__instance__

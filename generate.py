@@ -36,13 +36,9 @@ def main():
             debugpy.wait_for_client()
         except Exception as exc:
             logger.error(exc)
-    config = load_config(args.config, args.debug)
+    load_config(args.config, args.debug)
     p = Process()
     p.run()
-    logger.info(gila.all_config())
-
-    logger.info("woot woot")
-    print("Hello world")
 
 
 if __name__ == '__main__':

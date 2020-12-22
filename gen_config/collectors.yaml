@@ -1,5 +1,5 @@
 basePath: data
-include_dev_generate: false
+include_dev_generate: False
 include_dev_queue: false
 
 pmacct:
@@ -10,7 +10,10 @@ pmacct:
       config: sfacctd.conf
       image: pmacct/sfacctd:v1.7.5
 
+deployment_location: deploy
 
+
+template_folder: templates
 template_locations:
   docker: docker
   nfacctd: collectors
@@ -18,11 +21,17 @@ template_locations:
 environment_file: env.example
 
 sensors:
-    - sensorName: awesome
+    - sensorName: superCool
+      enabled: True
       type: sflow
-      instanceName: foobar
-      port: 9996
+      instanceName: moo
+      port: 9997
+    - sensorName: superCoolOld
+      enabled: False
+      type: sflow
+      instanceName: moo
+      port: 9997
     - sensorName: awesome
       type: netflow
       instanceName: foobar
-      port: 9997
+      port: 9996

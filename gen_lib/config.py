@@ -76,8 +76,12 @@ class Config(object):
         raise RuntimeError('Call instance() instead')
 
     @property
-    def dev_mode(self):
+    def dev_generate(self):
         return gila.get("include_dev_generate")
+
+    @property
+    def dev_queue(self):
+        return gila.get("include_dev_queue")
 
     @property
     def environment(self):

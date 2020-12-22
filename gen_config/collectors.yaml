@@ -1,6 +1,6 @@
 basePath: data
-include_dev_generate: False
-include_dev_queue: false
+include_dev_generate: True
+include_dev_queue: True
 
 pmacct:
     netflow: 

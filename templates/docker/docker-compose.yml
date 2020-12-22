@@ -18,8 +18,6 @@ services:
   {% for item in sflow_sensors %}
   sflow_{{item.name}}:
     image: pmacct/sfacctd:v1.7.5
-    # command: sleep 99999
-    # restart: on-failure
     {% if production %}
     external_links:
       - rabbit

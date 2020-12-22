@@ -38,6 +38,8 @@ def main():
             logger.error(exc)
     load_config(args.config, args.debug)
     p = Process()
+    if args.clean:
+        p.clean()
     p.run()
 
 

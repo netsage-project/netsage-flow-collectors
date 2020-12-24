@@ -1,4 +1,5 @@
-import os, sys
+import os
+import sys
 
 from loguru import logger
 import gila
@@ -8,6 +9,9 @@ from os import environ
 
 
 def load_config(config_file, debug=False):
+    """
+    Load the configuration file into the Config instance
+    """
     if not os.path.exists(config_file):
         logger.error("configuration file not found")
         sys.exit(1)
@@ -18,10 +22,17 @@ def load_config(config_file, debug=False):
 
 
 class SensorConfig(object):
+    """
+    Encapsulate all the sensors define and performs sanity checks
+    on configuration.
+
+    Also allows for disabled config
+    """
+
     sflow_sensors = []
     netflow_sensors = []
 
-    def __init__(self, sensors):
+    def __init__(self, sensors, pmacct):
         ports = set()
         for key in sensors:
             o = SensorObjet(key)
@@ -29,13 +40,18 @@ class SensorConfig(object):
                 continue
             if o.port in ports:
                 raise Exception(
-                    "invalid configuration.  Port {} is already used with a different configuration".format(o.port))
+                    "invalid configuration.  Port {} is already used with a different configuration".format(
+                        o.port
+                    )
+                )
             if o.type == "sflow":
                 self.sflow_sensors.append(o)
+                o.image = pmacct.image("sflow")
                 ports.add(o.port)
             else:
                 self.netflow_sensors.append(o)
                 ports.add(o.port)
+                o.image = pmacct.image("netflow")
 
 
 class PmfAcctConfig(object):
@@ -46,9 +62,9 @@ class PmfAcctConfig(object):
     def is_valid(self, requested_type):
         return requested_type in self.accepted_types
 
-    def config_file(self, requested_type):
+    def config_type(self, requested_type):
         if self.is_valid(requested_type):
-            return self.__config__.get('config')
+            return self.__config__.get(requested_type, {}).get("pmacctd_type")
 
     @property
     def types(self):
@@ -56,15 +72,15 @@ class PmfAcctConfig(object):
 
     def image(self, requested_type):
         if self.is_valid(requested_type):
-            return self.__config__.get('image')
+            return self.__config__.get(requested_type, {}).get("image")
 
     @property
     def netflow_config(self):
-        return self.__config__.get('netflow', {})
+        return self.__config__.get("netflow", {})
 
     @property
     def sflow_config(self):
-        return self.__config__.get('sflow', {})
+        return self.__config__.get("sflow", {})
 
 
 class Config(object):
@@ -73,7 +89,7 @@ class Config(object):
     __pmfconfig__ = None
 
     def __init__(self):
-        raise RuntimeError('Call instance() instead')
+        raise RuntimeError("Call instance() instead")
 
     @property
     def dev_generate(self):
@@ -85,18 +101,22 @@ class Config(object):
 
     @property
     def environment(self):
-        return gila.get('environment_file')
+        return gila.get("environment_file")
 
     @property
     def deploy_path(self):
-        return gila.get('deployment_location')
+        return gila.get("deployment_location")
 
     @property
     def template_folder(self):
-        return gila.get('template_folder')
+        return gila.get("template_folder")
 
     def template_path(self, template_type, file):
-        return os.path.join(self.template_folder, gila.get("template_locations.{}".format(template_type)), file)
+        return os.path.join(
+            self.template_folder,
+            gila.get("template_locations.{}".format(template_type)),
+            file,
+        )
 
     @property
     def sensors(self):
@@ -109,13 +129,13 @@ class Config(object):
     @classmethod
     def load_config(cls):
         script_dir = os.path.dirname(os.path.realpath(__file__))
-        gila.set_default('paths.template_dir', './conf/')
-        gila.set_default('paths.template_dir', "templates")
+        gila.set_default("paths.template_dir", "./conf/")
+        gila.set_default("paths.template_dir", "templates")
 
     @classmethod
-    def instance(cls, debug=False, config_path='./conf', config_file='app.yaml'):
+    def instance(cls, debug=False, config_path="./conf", config_file="app.yaml"):
         if cls.__instance__ is None:
-            logger.debug('Creating new configuration instance')
+            logger.debug("Creating new configuration instance")
             cls.__instance__ = cls.__new__(cls)
 
             cls.load_config()
@@ -125,11 +145,13 @@ class Config(object):
             gila.add_config_path(config_path)
             gila.read_config_file()
 
-            ## allow CLI override
+            # allow CLI override
             if debug:
-                gila.override('debug', debug)
+                gila.override("debug", debug)
             cls.__config__ = gila.all_config()
             cls.__pmfconfig__ = PmfAcctConfig(**cls.__config__.get("pmacct", {}))
-            cls.__sensors__ = SensorConfig(cls.__config__.get("sensors", {}))
+            cls.__sensors__ = SensorConfig(
+                cls.__config__.get("sensors", {}), cls.__pmfconfig__
+            )
 
         return cls.__instance__

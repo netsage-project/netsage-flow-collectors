@@ -3,15 +3,20 @@ include_dev_generate: True
 include_dev_queue: True
 
 pmacct:
-    netflow: 
-      config: nfacctd.conf
-      image: pmacct/nfacctd:v1.7.5
-    sflow: 
-      config: sfacctd.conf
-      image: pmacct/sfacctd:v1.7.5
+  netflow:
+    pmacctd_type: nfacctd.conf
+    image: pmacct/nfacctd:v1.7.5
+    config_type: nfacctd
+    port: 9996
+    queue_name: netflow_queue
+  sflow:
+    pmacctd_type: sfacctd.conf
+    image: pmacct/sfacctd:v1.7.5
+    queue_name: sflow_queue
+    config_type: sfacctd
+    port: 9997
 
 deployment_location: deploy
-
 
 template_folder: templates
 template_locations:
@@ -21,17 +26,17 @@ template_locations:
 environment_file: env.example
 
 sensors:
-    - sensorName: superCool
-      enabled: True
-      type: sflow
-      instanceName: moo
-      port: 9997
-    - sensorName: superCoolOld
-      enabled: False
-      type: sflow
-      instanceName: moo
-      port: 9997
-    - sensorName: awesome
-      type: netflow
-      instanceName: foobar
-      port: 9996
+  - sensorName: superCool
+    enabled: True
+    type: sflow
+    instanceName: moo
+    port: 9997
+  - sensorName: superCoolOld
+    enabled: False
+    type: sflow
+    instanceName: moo
+    port: 9997
+  - sensorName: awesome
+    type: netflow
+    instanceName: foobar
+    port: 9996

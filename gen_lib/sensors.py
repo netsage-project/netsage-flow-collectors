@@ -6,6 +6,14 @@ class SensorObjet(object):
         self.__data__ = copy(data)
 
     @property
+    def image(self):
+        return self.__data__.get("image")
+
+    @image.setter
+    def image(self, value):
+        self.__data__["image"] = value
+
+    @property
     def enabled(self):
         return self.__data__.get("enabled", True)
 

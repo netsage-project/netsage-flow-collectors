@@ -2,12 +2,12 @@ version: "3.7"
 services:
    {% for item in netflow_sensors %}
   netflow_{{ item.name }}:
-    image: pmacct/nfacctd:v1.7.5
+    image: {{item.image}}
     {% if production  %}
     external_links:
       - rabbit
     networks:
-      - shared_backend
+      - netsage_pipeline
     {% endif %}
     ports:
       - "9996:{{item.port}}/udp"
@@ -17,12 +17,12 @@ services:
   {% endfor %}
   {% for item in sflow_sensors %}
   sflow_{{item.name}}:
-    image: pmacct/sfacctd:v1.7.5
+    image: {{item.image}}
     {% if production %}
     external_links:
       - rabbit
     networks:
-      - shared_backend
+      - netsage_pipeline
     {% endif %}
     ports:
       - "9997:{{item.port}}/udp"
@@ -34,8 +34,8 @@ services:
 
 {% if production %}
 networks:
-  shared_backend:
-    name: shared_backend
+  netsage_pipeline:
+    name: netsage_pipeline
     # use a custom driver, with no options
     driver: bridge
 {%endif %}

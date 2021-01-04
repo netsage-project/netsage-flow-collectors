@@ -6,7 +6,7 @@ import pytest
 
 @pytest.fixture()
 def config():
-    load_config("./gen_config/collectors.yaml", False)
+    load_config("./gen_config/collectors.template.yml", False)
     config = Config.instance()
     yield config
 

@@ -12,7 +12,7 @@ def parse_args():
     parser.add_argument(
         "--config",
         dest="config",
-        default="./gen_config/collectors.yaml",
+        default="./gen_config/collectors.yml",
         help="Override config file",
     )
     parser.add_argument(

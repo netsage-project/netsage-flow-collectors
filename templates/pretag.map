@@ -2,4 +2,4 @@
 
 ! Set the sensor name as the label (arbitrary string tag)
 ! TODO: this needs a wrapper to allow ENV configs
-set_label={{sensorName}};{{instanceName}}
+set_label={{sensorName}};{{instanceID}}

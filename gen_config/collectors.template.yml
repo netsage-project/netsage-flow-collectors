@@ -1,6 +1,6 @@
 basePath: data
-include_dev_generate: True
-include_dev_queue: True
+include_dev_generate: False
+include_dev_queue: False
 
 pmacct:
   netflow:
@@ -18,6 +18,13 @@ pmacct:
 
 deployment_location: deploy
 
+## pmaccount doesn't allow for ENV overrides.  These values are used to configure
+## the destination host.
+mq_config:
+  rabbitmq_host: rabbit
+  rabbitmq_user: guest
+  rabbitmq_pass: guestsecret
+
 template_folder: templates
 template_locations:
   docker: docker
@@ -25,18 +32,15 @@ template_locations:
 
 environment_file: env.example
 
+## To disable any sensor simply set enabled: False
 sensors:
   - sensorName: superCool
     enabled: True
     type: sflow
-    instanceName: moo
-    port: 9997
-  - sensorName: superCoolOld
-    enabled: False
-    type: sflow
-    instanceName: moo
+    instanceID: 0
     port: 9997
   - sensorName: awesome
     type: netflow
-    instanceName: foobar
+    enabled: True
+    instanceID: 0
     port: 9996

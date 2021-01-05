@@ -59,9 +59,11 @@ class Process(object):
         Configures Environment file based on app config and creates a .env file
         """
         output = os.path.join(self.config.deploy_path, ".env")
-        self.__render_template__(
-            "docker/env.example", output, {"dev_queue": self.config.dev_queue}
-        )
+        data = {"dev_queue": self.config.dev_queue}
+        config = Config.instance()
+        rabbit = config.pmacct_config.rabbit.get_dict()
+        data.update(rabbit)
+        self.__render_template__("docker/env.example", output, data)
 
     def __generate_docker__(self):
         """
@@ -92,7 +94,7 @@ class Process(object):
         if not os.path.exists(dirname):
             p = Path(dirname)
             p.mkdir(parents=True)
-        raw_output = template.render(data)
+        raw_output = template.render(**data)
         with open(output, "w") as writer:
             writer.write(raw_output)
 
@@ -104,8 +106,9 @@ class Process(object):
         pmconfig = self.config.pmacct_config
         for item in sensors.sflow_sensors:
             sflow_config = pmconfig.sflow_config
+            sflow_config.update(pmconfig.rabbit.get_dict())
             sflow_config["sensorName"] = item.name
-            sflow_config["instanceName"] = item.instance
+            sflow_config["instanceID"] = item.instance
             output = os.path.join(
                 self.config.deploy_path,
                 "conf",
@@ -119,7 +122,8 @@ class Process(object):
         for item in sensors.netflow_sensors:
             netflow_config = pmconfig.netflow_config
             netflow_config["sensorName"] = item.name
-            netflow_config["instanceName"] = item.instance
+            netflow_config["instanceID"] = item.instance
+            netflow_config.update(pmconfig.rabbit.get_dict())
             output = os.path.join(
                 self.config.deploy_path,
                 "conf",

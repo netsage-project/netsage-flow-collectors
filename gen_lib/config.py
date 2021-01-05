@@ -34,6 +34,7 @@ class SensorConfig(object):
 
     def __init__(self, sensors, pmacct):
         ports = set()
+        unique_identifiers = set()
         for key in sensors:
             o = SensorObjet(key)
             if o.enabled is False:
@@ -44,20 +45,35 @@ class SensorConfig(object):
                         o.port
                     )
                 )
+            key = (o.name, o.instance)
+            if key in unique_identifiers:
+                raise Exception(
+                    "Invalid Configuration.  All enabled sensors must have a unique sensorID + InstanceID combination"
+                )
+            valid = False
             if o.type == "sflow":
                 self.sflow_sensors.append(o)
                 o.image = pmacct.image("sflow")
-                ports.add(o.port)
+                valid = True
             else:
                 self.netflow_sensors.append(o)
-                ports.add(o.port)
                 o.image = pmacct.image("netflow")
+                valid = True
+
+            if valid:
+                ports.add(o.port)
+                unique_identifiers.add(key)
 
 
 class PmfAcctConfig(object):
-    def __init__(self, **kwargs):
+    def __init__(self, data, rabbit):
         self.accepted_types = ["netflow", "sflow"]
-        self.__config__ = copy(kwargs)
+        self.__config__ = copy(data)
+        self.__rabbit__ = rabbit
+
+    @property
+    def rabbit(self):
+        return self.__rabbit__
 
     def is_valid(self, requested_type):
         return requested_type in self.accepted_types
@@ -81,6 +97,34 @@ class PmfAcctConfig(object):
     @property
     def sflow_config(self):
         return self.__config__.get("sflow", {})
+
+
+class RabbitConfig(object):
+    def __init__(self, data) -> None:
+        super().__init__()
+        print("Hello")
+        if data is None or len(data) == 0:
+            raise Exception("Invalid configuration.  Missing MessageQueue config")
+        self.__data__ = copy(data)
+
+    def get_dict(self) -> dict:
+        return copy(self.__data__)
+
+    ##@property
+    def hostname(self) -> str:
+        return self.__data__.get("rabbitmq_host")
+
+    @property
+    def user(self) -> str:
+        return self.__data__.get("rabbitmq_user")
+
+    @property
+    def password(self) -> str:
+        return self.__data__.get("rabbitmq_host")
+
+    def __str__(self) -> str:
+        print("it was called now")
+        return "rabbitStr"
 
 
 class Config(object):
@@ -128,7 +172,6 @@ class Config(object):
 
     @classmethod
     def load_config(cls):
-        script_dir = os.path.dirname(os.path.realpath(__file__))
         gila.set_default("paths.template_dir", "./conf/")
         gila.set_default("paths.template_dir", "templates")
 
@@ -149,7 +192,12 @@ class Config(object):
             if debug:
                 gila.override("debug", debug)
             cls.__config__ = gila.all_config()
-            cls.__pmfconfig__ = PmfAcctConfig(**cls.__config__.get("pmacct", {}))
+
+            rabbit_dict = gila.all_config().get("mq_config", {})
+            rabbit_config = RabbitConfig(rabbit_dict)
+            cls.__pmfconfig__ = PmfAcctConfig(
+                cls.__config__.get("pmacct", {}), rabbit_config
+            )
             cls.__sensors__ = SensorConfig(
                 cls.__config__.get("sensors", {}), cls.__pmfconfig__
             )

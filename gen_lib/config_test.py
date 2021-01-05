@@ -1,6 +1,6 @@
 from gen_lib.config import Config, PmfAcctConfig, load_config
-import pytest
-
+from gen_lib.sensors import SensorObjet
+import gila
 import pytest
 
 
@@ -25,9 +25,22 @@ class TestPmfAcctConfig:
 class TestConfig:
     def test_config(self, config):
         assert config.deploy_path == "deploy"
-        assert config.dev_generate is True
-        assert config.dev_queue is True
+        assert config.dev_generate is False
+        assert config.dev_queue is False
         assert config.environment == "env.example"
         assert config.template_folder == "templates"
         assert config.sensors is not None
         assert config.pmacct_config is not None
+
+    def test_sensors(self, config):
+        data = gila.all_config()
+        sensorData = data["sensors"][0]
+        sensorData['instanceID'] = 'foobar'
+        failed = False
+        try:
+            SensorObjet(sensorData)
+        except Exception as e:
+            failed = True
+            assert str(e) == 'InstanceID \'foobar\' needs to be numeric'
+
+        assert failed is True

@@ -2,8 +2,17 @@ from copy import copy
 
 
 class SensorObjet(object):
-    def __init__(self, data):
+    def __init__(self, data, rabbit={}) -> None:
         self.__data__ = copy(data)
+        if "instanceID" in self.__data__:
+            try:
+                int(self.__data__.get("instanceID"))
+            except:
+                raise Exception(
+                    "InstanceID '{}' needs to be numeric".format(
+                        self.__data__["instanceID"]
+                    )
+                )
 
     @property
     def image(self):
@@ -49,4 +58,4 @@ class SensorObjet(object):
         """
         instance name if hostname should be overrideen.
         """
-        return self.__data__.get("instanceName")
+        return self.__data__.get("instanceID", "0")

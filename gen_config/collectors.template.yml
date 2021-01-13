@@ -1,0 +1,46 @@
+basePath: data
+include_dev_generate: False
+include_dev_queue: False
+
+pmacct:
+  netflow:
+    pmacctd_type: nfacctd.conf
+    image: pmacct/nfacctd:v1.7.5
+    config_type: nfacctd
+    port: 9996
+    queue_name: netflow_queue
+  sflow:
+    pmacctd_type: sfacctd.conf
+    image: pmacct/sfacctd:v1.7.5
+    queue_name: sflow_queue
+    config_type: sfacctd
+    port: 9997
+
+deployment_location: deploy
+
+## pmaccount doesn't allow for ENV overrides.  These values are used to configure
+## the destination host.
+mq_config:
+  rabbitmq_host: rabbit
+  rabbitmq_user: guest
+  rabbitmq_pass: guest
+
+template_folder: templates
+template_locations:
+  docker: docker
+  nfacctd: collectors
+
+environment_file: env.example
+
+## To disable any sensor simply set enabled: False
+sensors:
+  - sensorName: superCool
+    enabled: True
+    type: sflow
+    instanceID: 0
+    port: 9997
+  - sensorName: awesome
+    type: netflow
+    enabled: True
+    instanceID: 0
+    port: 9996

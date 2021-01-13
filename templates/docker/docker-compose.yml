@@ -1,0 +1,41 @@
+version: "3.7"
+services:
+   {% for item in netflow_sensors %}
+  netflow_{{ item.name }}:
+    image: {{item.image}}
+    {% if production  %}
+    external_links:
+      - rabbit
+    networks:
+      - netsage_pipeline
+    {% endif %}
+    ports:
+      - "9996:{{item.port}}/udp"
+    volumes:
+      - ./conf/netflow/{{item.name}}/nfacctd.conf:/etc/pmacct/nfacctd.conf
+      - ./conf/netflow/{{item.name}}/pretag.map:/etc/pmacct/pretag.map
+  {% endfor %}
+  {% for item in sflow_sensors %}
+  sflow_{{item.name}}:
+    image: {{item.image}}
+    {% if production %}
+    external_links:
+      - rabbit
+    networks:
+      - netsage_pipeline
+    {% endif %}
+    ports:
+      - "9997:{{item.port}}/udp"
+    volumes:
+      - ./conf/sflow/{{item.name}}/sfacctd.conf:/etc/pmacct/sfacctd.conf
+      - ./conf/sflow/{{item.name}}/pretag.map:/etc/pmacct/pretag.map
+  {% endfor %}
+
+
+{% if production %}
+networks:
+  netsage_pipeline:
+    name: netsage_pipeline
+    # use a custom driver, with no options
+    driver: bridge
+{%endif %}

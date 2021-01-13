@@ -1,0 +1,11 @@
+debugpy==1.2.1
+gila==0.5.0
+Jinja2==2.11.2
+loguru==0.5.3
+MarkupSafe==1.1.1
+ply==3.11
+pyhcl==0.3.13
+python-dotenv==0.10.3
+PyYAML==5.1.2
+toml==0.10.0
+pytest==6.2.1

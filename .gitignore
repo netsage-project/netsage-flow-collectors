@@ -1,1 +1,7 @@
 .history
+*.pyc
+__pycache__
+.vscode
+.idea
+deploy
+gen_config/collectors.yml

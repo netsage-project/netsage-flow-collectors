@@ -3,25 +3,28 @@
 version: "3.7"
 services:
   ##Enable only if you wish to not rely on external rabbit
+    {% if dev_queue %}
   rabbit:
     image: netsage/rabbitmq:3-management
     env_file: .env
     volumes:
       - ./data/rabbit:/var/lib/rabbitmq
-    networks:
-      - shared_backend
     ports:
       - "15672:15672"
       - "5671:5671"
       - "5672:5672"
-
-  ##both collectors only need if using dev rabbit defined above.
-  netflow_collector:
+  {% for item in netflow_sensors %}
+  netflow_{{ item.name }}:
     depends_on:
       - rabbit
-  sflow_collector:
+    {% endfor %}
+  {% for item in sflow_sensors %}
+  sflow_{{item.name}}:
     depends_on:
       - rabbit
+  {% endfor %}
+  {% endif %}
+  {% if generate %}
   ## Services below are used to generate sflow data
   agent:
     image: sflow/host-sflow
@@ -39,4 +42,5 @@ services:
     command: "-s"
     ports:
       - 5201:5201
+  {% endif %}
 

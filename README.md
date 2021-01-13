@@ -9,7 +9,7 @@ External Dependency:
       - sflow_queue
 
 
-This project is current in an alpha stage:
+Please see the [docs](docs/) folder for more details.
 
 Tools used:
   - [pmacct](https://github.com/pmacct/pmacct) is used primarily for the data collection.
